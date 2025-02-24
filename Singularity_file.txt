@@ -1,0 +1,13 @@
+Bootstrap: library
+From: debian:10
+
+%post
+apt-get update
+apt-get install -y python3.8 python3.8-dev python3.8-pip
+apt-get install -y git
+pip3 install numpy pandas nibabel matplotlib scipy os 
+
+mkdir $SINGULARITY_ROOTFS/HPC
+cd $SINGULARITY_ROOTFS/HPC
+git clone https://github.com/EmmaRoveroni/HPC_project.git
+
