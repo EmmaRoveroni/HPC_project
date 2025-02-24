@@ -5,7 +5,7 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from TSPONet_functions import minmax_norm, euclidean_distance, cosine_similarity, compute_TSPONet, compute_node_strength
+from TSPONet_functions import minmax_norm, euclidean_distance, cosine_similarity, compute_TSPONet
 from scipy.io import savemat
 
 folderData = '/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/data'
@@ -138,27 +138,6 @@ for idx, subj in enumerate(os.listdir(folderData)):
 
                 file_name = os.path.join(folderResults_Eucl_Cos, f"{subj}.mat")
                 savemat(file_name,{"Net_euclidean" : rescaled_sim_matrix, "Net_cosine": rescaled_cos_matrix})
-                # # Create two subplots (1 row, 2 columns)
-                # fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
-                
-                # # Plot the rescaled similarity matrix
-                # ax1 = axes[0]  # First subplot
-                # cax1 = ax1.imshow(rescaled_sim_matrix, cmap='jet', interpolation='nearest')
-                # fig.colorbar(cax1, ax=ax1)  # Add colorbar
-                # ax1.set_title("Rescaled Euclidean Similarity Matrix")
-                # ax1.set_xlabel("ROI")
-                # ax1.set_ylabel("ROI")
-
-                # # Plot the rescaled cosine similarity matrix
-                # ax2 = axes[1]  # Second subplot
-                # cax2 = ax2.imshow(rescaled_cos_matrix, cmap='jet', interpolation='nearest')
-                # fig.colorbar(cax2, ax=ax2)  # Add colorbar
-                # ax2.set_title("Rescaled Cosine Similarity Matrix")
-                # ax2.set_xlabel("ROI")
-                # ax2.set_ylabel("ROI")
-
-
 
             ## Similarity based on ROI distributions
             if compute_KL_distance:
@@ -166,9 +145,6 @@ for idx, subj in enumerate(os.listdir(folderData)):
                 file_name = os.path.join(folderResults_KL, f"{subj}.mat")
                 savemat(file_name,{"TSPONet" : TSPONet_dist})
                 TSPONet_all.append(TSPONet_dist)
-
-            # Compute node strength
-           # node_strength = compute_node_strength(TSPONet_dist)
 
             # plt.figure(figsize=(10, 6))
             # x_values = np.arange(len(selected_labels))  # Numeric vector for the X-axis
