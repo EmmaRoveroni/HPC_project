@@ -14,8 +14,8 @@ folderResults_KL = '/nfsd/biopetmri4/Users/LeonardoBarzon/TSPONet/results/Networ
 folderResults_Eucl_Cos = '/nfsd/biopetmri4/Users/LeonardoBarzon/TSPONet/results/Networks_euclidean_cosine'
 
 Group = [] 
-compute_euclidean_cosine = True
-compute_KL_distance = False
+compute_euclidean_cosine = False
+compute_KL_distance = True
 TSPONet_all = [] 
 
 for idx, subj in enumerate(os.listdir(folderData)):
@@ -146,14 +146,4 @@ for idx, subj in enumerate(os.listdir(folderData)):
                 savemat(file_name,{"TSPONet" : TSPONet_dist})
                 TSPONet_all.append(TSPONet_dist)
 
-            # plt.figure(figsize=(10, 6))
-            # x_values = np.arange(len(selected_labels))  # Numeric vector for the X-axis
-            # plt.bar(x_values, node_strength, color='skyblue', edgecolor='black')
-            # plt.title("Node Strength per Brain Region", fontsize=16)
-            # plt.xlabel("Brain Regions", fontsize=12)
-            # plt.ylabel("Node Strength", fontsize=12)
-            # plt.xticks(x_values, selected_labels, rotation=45, ha='right', fontsize=10) 
-            # plt.tight_layout()  
-            # plt.show()
-
-# savemat(os.path.join(folderResults, "Matrices_all.mat"), {"Matrices" : TSPONet_all})
+savemat(os.path.join(folderResults_KL, "Matrices_all.mat"), {"Matrices" : TSPONet_all})
