@@ -2,7 +2,6 @@
 
 import os
 import nibabel as nib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from TSPONet_functions import minmax_norm, euclidean_distance, cosine_similarity, compute_TSPONet
