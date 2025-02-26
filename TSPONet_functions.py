@@ -1,7 +1,6 @@
 # TSPONet framework functions
 from scipy.spatial import cKDTree as KDTree
 import numpy as np
-import pandas as pd
 
 def euclidean_distance(vec1, vec2):
     return np.sqrt(np.sum((vec1 - vec2) ** 2))

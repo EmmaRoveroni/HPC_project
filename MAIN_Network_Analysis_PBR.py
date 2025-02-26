@@ -1,148 +1,85 @@
-# Network analysis for TSPO PET data
-
 import os
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from TSPONet_functions import minmax_norm, euclidean_distance, cosine_similarity, compute_TSPONet
+import argparse
+from TSPONet_functions import compute_TSPONet
 from scipy.io import savemat
 
-folderData = '/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/data'
-folderInfo = '/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PK/info'
-folderResults_KL = '/nfsd/biopetmri4/Users/LeonardoBarzon/TSPONet/results/Networks_KL'
-folderResults_Eucl_Cos = '/nfsd/biopetmri4/Users/LeonardoBarzon/TSPONet/results/Networks_euclidean_cosine'
+def main():
+    parser = argparse.ArgumentParser(description='Network analysis for TSPO PET data')
+    parser.add_argument('--folderData', required=True, help='Path to data folder')
+    parser.add_argument('--folderAtlasInfo', required=True, help='Path atals info folder')
+    parser.add_argument('--folderSubjectsInfo', required=True, help='Path subjects info folder')
+    parser.add_argument('--folderResults', required=True, help='Path where to store results')
+    args = parser.parse_args()
+    
+    folderData = args.folderData
+    folderAtlasInfo = args.folderAtlasInfo
+    folderSubjectsInfo = args.folderSubjectsInfo
+    folderResults = args.folderResults
 
-Group = [] 
-compute_euclidean_cosine = False
-compute_KL_distance = True
-TSPONet_all = [] 
+    Group = [] 
 
-for idx, subj in enumerate(os.listdir(folderData)):
-    if subj.startswith("SubjPBR_"):
-        subj_path=os.path.join(folderData, subj)
-        if os.path.isdir(subj_path):
-            print(f"Working on {subj} ")
+    TSPONet_all = [] 
 
-            # Load dynamic PET data
-            dynPET_nifti = nib.load(f"/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/data/{subj}/PET/MNI_raip{subj}.hdr")
-            dynPET = dynPET_nifti.get_fdata()
+    for idx, subj in enumerate(os.listdir(folderData)):
+        if subj.startswith("Subj"):
+            subj_path=os.path.join(folderData, subj)
+            if os.path.isdir(subj_path):
+                print(f"Working on {subj} ")
 
-            # Load K1 map
-            K1map_nifti = nib.load(f"/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/results/LogisticRegression/K1_maps/{subj}.hdr")
-            K1map = K1map_nifti.get_fdata()
+                # Load dynamic PET data
+                dynPET_nifti = nib.load(os.path.join(folderData, subj, "PET", f"MNI_raip{subj}.hdr"))
+                dynPET = dynPET_nifti.get_fdata()
 
-            # Load atlas in subject space
-            Atlas_nifti = nib.load(f"/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/data/{subj}/SVCAmasks/aparc+aseg_2_PET.nii.gz") #Desikan 
-            Atlas = Atlas_nifti.get_fdata()
-            # Read labels
-            SubCor_INFO = pd.read_excel(f"{folderInfo}/freesurfer/Labels_Desikan_Destrieux.xlsx", sheet_name="Subcorticals")
-            SubCor_Names = SubCor_INFO['Name'].astype(str)  # Convert to string
-            SubCor_Labels = SubCor_INFO['Label']
-            Desikan_INFO = pd.read_excel(f"{folderInfo}/freesurfer/Labels_Desikan_Destrieux.xlsx", sheet_name="DesikanCortex")
-            Desikan_Names = Desikan_INFO['Name'].astype(str)  # Convert to string
-            Desikan_Labels = Desikan_INFO['Label']
-            DK_labels = np.concatenate([SubCor_Labels.values, Desikan_Labels.values])
+                # Load K1 map
+                K1map_nifti = nib.load(os.path.join(folderData, "../results", "LogisticRegression", "K1_maps", f"{subj}.hdr"))
+                K1map = K1map_nifti.get_fdata()
 
-            # Selected labels (remember function range does not include the last extreme)
-            labelsCerebellum = [8, 47]  # LH e RH
-            labelsSubcorticals = list(range(10, 14)) + [17, 18] + [26, 28] + list(range(49, 55)) + [58, 60]  # LH e RH 19 and 55 insula added
-            labelDesCortex = [label for label in list(range(1001, 1036)) + list(range(2001, 2036)) if label not in [1004, 2004]] # LH e RH
-            labelsBrainStem = [16]
-            selected_labels = labelsBrainStem + labelsCerebellum + labelsSubcorticals + labelDesCortex
-            selected_labels = np.array(selected_labels)
-           # selected_labels = np.sort(selected_labels)
-            n_roi = len(selected_labels)
+                # Load atlas in subject space
+                Atlas_nifti = nib.load(os.path.join(folderData, subj, "SVCAmasks", "aparc+aseg_2_PET.nii.gz"))
+                Atlas = Atlas_nifti.get_fdata()
 
-            # Select time points based on logistic regression analysis
-            sel = [6, 16, 23]
-            TAC_selected = [dynPET[:, :, :, idx] for idx in sel] # NOrmalize TAC by dose/weight
-            info = pd.read_excel(f'/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/info/SubjectsInfo_anonymization.xlsx')
-            Subject_info = info[info['SubjID'] == subj]
-            Group.append(Subject_info['Group'])  
-            Dose = float(Subject_info['Dose'].iloc[0])
-            Weight = float(Subject_info['Weight'].iloc[0])
-            DW = Dose / Weight
-            TAC_1 = TAC_selected[0] / DW
-            TAC_2 = TAC_selected[1] / DW
-            TAC_3 = TAC_selected[2] / DW
+                # Read labels
+                SubCor_INFO = pd.read_excel(os.path.join(folderAtlasInfo, "freesurfer", "Labels_Desikan_Destrieux.xlsx"), sheet_name="Subcorticals")
+                SubCor_Names = SubCor_INFO['Name'].astype(str)  # Convert to string
+                SubCor_Labels = SubCor_INFO['Label']
+                Desikan_INFO = pd.read_excel(os.path.join(folderAtlasInfo, "freesurfer", "Labels_Desikan_Destrieux.xlsx"), sheet_name="DesikanCortex")
+                Desikan_Names = Desikan_INFO['Name'].astype(str)  # Convert to string
+                Desikan_Labels = Desikan_INFO['Label']
+                DK_labels = np.concatenate([SubCor_Labels.values, Desikan_Labels.values])
 
-            # Stack the features into a 4D array
-            Features = np.stack((TAC_1, TAC_2, TAC_3, K1map), axis=3)
-            n_features = Features.shape[3]
+                # Selected labels
+                labelsCerebellum = [8, 47]  # LH e RH
+                labelsSubcorticals = list(range(10, 14)) + [17, 18] + [26, 28] + list(range(49, 55)) + [58, 60]
+                labelDesCortex = [label for label in list(range(1001, 1036)) + list(range(2001, 2036)) if label not in [1004, 2004]]
+                labelsBrainStem = [16]
+                selected_labels = np.array(labelsBrainStem + labelsCerebellum + labelsSubcorticals + labelDesCortex)
 
-            if n_features > 1 and compute_euclidean_cosine:
+                # Select time points
+                sel = [6, 16, 23]
+                TAC_selected = [dynPET[:, :, :, idx] for idx in sel]
+                info = pd.read_excel(os.path.join(folderSubjectsInfo, "SubjectsInfo_anonymization.xlsx"))
+                Subject_info = info[info['SubjID'] == subj]
+                Group.append(Subject_info['Group'])  
+                Dose = float(Subject_info['Dose'].iloc[0])
+                Weight = float(Subject_info['Weight'].iloc[0])
+                DW = Dose / Weight
+                TAC_1 = TAC_selected[0] / DW
+                TAC_2 = TAC_selected[1] / DW
+                TAC_3 = TAC_selected[2] / DW
 
-                # Initialize the output array for median features
-                median_features = np.zeros((n_roi, n_features))
+                # Stack the features into a 4D array
+                Features = np.stack((TAC_1, TAC_2, TAC_3, K1map), axis=3)
 
-                # Compute the median features
-                for i, current_roi in enumerate(selected_labels):
-                    roi_mask = Atlas == current_roi                 # Create a mask for the current ROI
-                    if np.any(roi_mask):                            # Verify if the ROI is included
-                        for f in range(n_features):
-                            current_feat = Features[..., f]             # Extract the current feature map
-                            tmp = current_feat[roi_mask]                # Extract values for the current ROI
-                            median_features[i, f] = np.nanmedian(tmp)      # Compute the median and store it
-                    else:
-                        median_features[i,:] = np.nan 
-
-                # Compute distance between ROIs
-                eucl_dist = np.zeros((n_roi, n_roi))
-                cos_sim = np.zeros((n_roi, n_roi))
-                KL_dist = np.zeros((n_roi, n_roi))
-                for i in range(n_roi):
-                    for j in range(n_roi):
-                        if (i != j) and not (np.isnan(median_features[i, :]).any() or np.isnan(median_features[j, :]).any()):
-                            # Compute Euclidean distance between ROI feature vectors
-                            fi = minmax_norm(median_features[i,:])
-                            fj = minmax_norm(median_features[j,:])
-                            eucl_dist[i, j] = euclidean_distance(fi, fj)
-                            cos_sim[i, j] = 1 - cosine_similarity(fi, fj)
-                        else:
-                            eucl_dist[i,j] = np.nan
-                            cos_sim[i,j] = np.nan
-
-                # Normalize distances to obtain Euclidean similarity
-                max_distance = np.nanmax(eucl_dist)  # Maximum distance for the subject
-                max_cos = np. nanmax(cos_sim)
-
-                if max_distance > 0:
-                    sim_matrix = 1 - (eucl_dist / max_distance)
-                else:
-                    sim_matrix = np.ones_like(eucl_dist)  # Handle case where max_distance = 0
-
-                if max_cos > 0:
-                    cos_matrix = 1 - (cos_sim / max_cos)
-                else:
-                    cos_matrix = np.ones_like(cos_sim)  # Handle case where max_cos = 0
-
-                # Apply Fisher z-transformation to stabilize variance
-                fisher_z_sim = np.arctanh(sim_matrix)  # Fisher z-transformation
-                fisher_z_cos = np.arctanh(cos_matrix)
-
-                # Rescale Fisher z-transformed values back to [0, 1]
-                min_z = np.nanmin(fisher_z_sim)
-                max_z = np.nanmax(fisher_z_sim)
-                if max_z > min_z:  # Avoid division by zero
-                    rescaled_sim_matrix = (fisher_z_sim - min_z) / (max_z - min_z)
-                else:
-                    rescaled_sim_matrix = np.zeros_like(fisher_z_sim)  # Handle edge case
-
-                min_z = np.nanmin(fisher_z_cos)
-                max_z = np.nanmax(fisher_z_cos)
-                if max_z > min_z:  # Avoid division by zero
-                    rescaled_cos_matrix = (fisher_z_cos - min_z) / (max_z - min_z)
-                else:
-                    rescaled_cos_matrix = np.zeros_like(fisher_z_cos)  # Handle edge case
-
-                file_name = os.path.join(folderResults_Eucl_Cos, f"{subj}.mat")
-                savemat(file_name,{"Net_euclidean" : rescaled_sim_matrix, "Net_cosine": rescaled_cos_matrix})
-
-            ## Similarity based on ROI distributions
-            if compute_KL_distance:
+                ## Similarity based on ROI distributions
                 TSPONet_dist = compute_TSPONet(Features, Atlas, selected_labels, standardize_features=True, visual_report=False, visualize_results=False) 
-                file_name = os.path.join(folderResults_KL, f"{subj}.mat")
+                file_name = os.path.join(folderResults, f"{subj}.mat")
                 savemat(file_name,{"TSPONet" : TSPONet_dist})
                 TSPONet_all.append(TSPONet_dist)
 
-savemat(os.path.join(folderResults_KL, "Matrices_all.mat"), {"Matrices" : TSPONet_all})
+    savemat(os.path.join(folderResults, "Matrices_all.mat"), {"Matrices" : TSPONet_all})
+
+if __name__ == "__main__":
+    main()

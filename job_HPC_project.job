@@ -13,4 +13,8 @@
 
 newgrp biopetmri_tesi
 
-srun singularity exec HPC_Singularity.sif python3 /HPC/HPC_project/MAIN_Network_Analysis_PBR.py
+srun singularity exec HPC_Singularity.sif python3 /HPC/HPC_project/MAIN_Network_Analysis_PBR.py --folderData "/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/data" \
+                                     --folderAtlasInfo "/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PK/info" \
+                                     --folderSubjectsInfo "/nfsd/biopetmri4_tesi/BarzonLeonardo_2024/Neuroinflammation_PBR/info" \
+				     --folderResults "/nfsd/biopetmri4/Users/LeonardoBarzon/TSPONet/results/Networks_KL"
+			     
