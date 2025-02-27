@@ -22,11 +22,12 @@ def main():
     Group = [] 
 
     TSPONet_all = [] 
-
+    count = 0
     for idx, subj in enumerate(os.listdir(folderData)):
-        if subj.startswith("Subj"):
+        if subj.startswith("Subj") and count<100:
             subj_path=os.path.join(folderData, subj)
             if os.path.isdir(subj_path):
+                count = count + 1
                 print(f"Working on {subj} ")
 
                 # Load dynamic PET data
@@ -79,7 +80,7 @@ def main():
                 savemat(file_name,{"TSPONet" : TSPONet_dist})
                 TSPONet_all.append(TSPONet_dist)
 
-    savemat(os.path.join(folderResults, "Matrices_all.mat"), {"Matrices" : TSPONet_all})
+    savemat(os.path.join(folderResults, "Matrices_HPC_project.mat"), {"Matrices" : TSPONet_all})
 
 if __name__ == "__main__":
     main()
