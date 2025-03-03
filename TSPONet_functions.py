@@ -103,6 +103,8 @@ def compute_TSPONet(Features, Atlas, selected_ROIs, standardize_features, visual
                 iqr = np.nanpercentile(Features[Atlas_mask, f], 75) - np.nanpercentile(Features[Atlas_mask, f], 25)
                 Features_std[Atlas_mask, f] = (Features[Atlas_mask, f] - m) / iqr
            # print(Features_std.shape)
+    else:
+        Features_std=Features
 
     for i,roi_i in enumerate(selected_ROIs):
         for j, roi_j in enumerate(selected_ROIs):
