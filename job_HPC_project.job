@@ -3,7 +3,7 @@
 #SBATCH --error HPCProject_%j_error.txt
 #SBATCH --mail-user leonardo.barzon.1@studenti.unipd.it
 #SBATCH --mail-type ALL
-#SBATCH
+
 #SBATCH --time 0-02:00:00
 #SBATCH --ntasks 1
 #SBATCH -c 1
